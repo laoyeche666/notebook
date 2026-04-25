@@ -9,12 +9,27 @@
     "dist": "electron-builder",
     "dist:win": "electron-builder --win"
   },
-  "build": {
-    "appId": "com.tripplanner.pet",
-    "productName": "行程规划桌宠",
-    "directories": {
-      "output": "dist"
-    },
+ "build": {
+  "appId": "com.tripplanner.pet",
+  "productName": "行程规划桌宠",
+  "directories": {
+    "output": "dist"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true
+  }
+}
     "win": {
       "target": [
         {
