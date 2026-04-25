@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>行程规划桌宠</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: #f3f4f6;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background: white;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .app-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .window-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      background: rgba(255, 255, 255, 0.2);
+      transition: background 0.2s;
+    }
+
+    .window-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .window-btn.close:hover {
+      background: #e81123;
+    }
+
+    .app-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      text-align: center;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      color: #6b7280;
+    }
+
+    .tab.active {
+      border-bottom-color: #667eea;
+      color: #667eea;
+      font-weight: 500;
+    }
+
+    .tab:hover:not(.active) {
+      color: #374151;
+    }
+
+    .tab-content {
+      display: none;
+      flex: 1;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      background: white;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .btn-primary {
+      background-color: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #5a6fd8;
+    }
+
+    .btn-success {
+      background-color: #16a34a;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background-color: #15803d;
+    }
+
+    .btn-danger {
+      color: #dc2626;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .btn-danger:hover {
+      color: #b91c1c;
+    }
+
+    .text-muted {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    .goal-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #fafafa;
+    }
+
+    .goal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .goal-title {
+      font-weight: 500;
+      color: #111827;
+      font-size: 13px;
+    }
+
+    .goal-desc {
+      color: #6b7280;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .goal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .badge-high {
+      background-color: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-medium {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-low {
+      background-color: #d1fae5;
+      color: #065f46;
+    }
+
+    .schedule-item {
+      border: 1px solid;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .schedule-item.high {
+      border-color: #fecaca;
+      background-color: #fef2f2;
+    }
+
+    .schedule-item.medium {
+      border-color: #fde68a;
+      background-color: #fefce8;
+    }
+
+    .schedule-item.low {
+      border-color: #a7f3d0;
+      background-color: #ecfdf5;
+    }
+
+    .schedule-title {
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .schedule-time {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .schedule-desc {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #6b7280;
+      font-size: 12px;
+      padding: 24px 0;
+    }
+
+    .mini-calendar {
+      width: 100%;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .calendar-title {
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 4px;
+    }
+
+    .calendar-nav button {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 4px;
+      background-color: #f3f4f6;
+      color: #374151;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .calendar-nav button:hover {
+      background-color: #e5e7eb;
+    }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 10px;
+      color: #6b7280;
+      padding: 4px 0;
+      font-weight: 500;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+    }
+
+    .calendar-day {
+      text-align: center;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .calendar-day:hover {
+      background: #f3f4f6;
+    }
+
+    .calendar-day.today {
+      background-color: #667eea;
+      color: white;
+      font-weight: 600;
+    }
+
+    .calendar-day.other-month {
+      color: #d1d5db;
+    }
+
+    .calendar-day.has-events {
+      position: relative;
+    }
+
+    .calendar-day.has-events::after {
+      content: '';
+      position: absolute;
+      bottom: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: #667eea;
+    }
+
+    .calendar-day.today.has-events::after {
+      background-color: white;
+    }
+
+    .notification-toast {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 280px;
+      width: calc(100% - 32px);
+      z-index: 1000;
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateX(-50%) translateY(-20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .notification-toast-title {
+      font-weight: 600;
+      color: #111827;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .notification-toast-message {
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .notification-toast-time {
+      font-size: 10px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .app-footer {
+      padding: 10px 16px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      background: #fafafa;
+    }
+
+    .footer-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      background: white;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+
+    .footer-btn:hover {
+      background: #f3f4f6;
+    }
+
+    .list-container {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .hint-text {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="app-header">
+      <div class="app-title">行程规划桌宠</div>
+      <div class="window-controls">
+        <button class="window-btn minimize" id="minimizeBtn" title="最小化">−</button>
+        <button class="window-btn close" id="closeBtn" title="关闭">×</button>
+      </div>
+    </div>
+    
+    <div class="app-content">
+      <div class="tabs">
+        <div class="tab active" data-tab="goals">目标</div>
+        <div class="tab" data-tab="schedule">行程</div>
+        <div class="tab" data-tab="calendar">日历</div>
+      </div>
+      
+      <div class="tab-content active" id="goals">
+        <div class="form-group">
+          <label>目标名称</label>
+          <input type="text" id="goal-title" placeholder="输入目标名称">
+        </div>
+        <div class="form-group">
+          <label>描述</label>
+          <textarea id="goal-desc" placeholder="输入目标描述" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>优先级</label>
+          <select id="goal-priority">
+            <option value="high">高</option>
+            <option value="medium" selected>中</option>
+            <option value="low">低</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>开始日期</label>
+            <input type="date" id="goal-start">
+          </div>
+          <div class="form-group">
+            <label>结束日期</label>
+            <input type="date" id="goal-end">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>每天所需时间（小时）</label>
+          <input type="number" id="goal-hours" value="1" min="0.5" step="0.5">
+        </div>
+        <button class="btn btn-primary" id="addGoalBtn">添加目标</button>
+        
+        <div class="list-container mt-3" id="goalList"></div>
+      </div>
+      
+      <div class="tab-content" id="schedule">
+        <button class="btn btn-success" id="generateScheduleBtn">生成行程</button>
+        <p class="hint-text" id="scheduleHint">添加目标后点击生成行程</p>
+        <div class="list-container mt-3" id="scheduleList"></div>
+      </div>
+      
+      <div class="tab-content" id="calendar">
+        <div class="mini-calendar" id="miniCalendar"></div>
+      </div>
+    </div>
+    
+    <div class="app-footer">
+      <button class="footer-btn" id="todayBtn">今天</button>
+      <button class="footer-btn" id="clearBtn">清空数据</button>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      goals: JSON.parse(localStorage.getItem('petGoals') || '[]'),
+      scheduleItems: JSON.parse(localStorage.getItem('petScheduleItems') || '[]'),
+      currentTab: 'goals',
+      currentDate: new Date(),
+      notifications: []
+    };
+
+    function saveState() {
+      localStorage.setItem('petGoals', JSON.stringify(state.goals));
+      localStorage.setItem('petScheduleItems', JSON.stringify(state.scheduleItems));
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
+
+    function addGoal() {
+      const title = document.getElementById('goal-title').value.trim();
+      const description = document.getElementById('goal-desc').value.trim();
+      const priority = document.getElementById('goal-priority').value;
+      const startDate = document.getElementById('goal-start').value;
+      const endDate = document.getElementById('goal-end').value;
+      const timeConstraint = parseFloat(document.getElementById('goal-hours').value);
+
+      if (!title || !startDate || !endDate) {
+        showNotification('提示', '请填写完整的目标信息');
+        return;
+      }
+
+      if (new Date(endDate) < new Date(startDate)) {
+        showNotification('提示', '结束日期不能早于开始日期');
+        return;
+      }
+
+      const newGoal = {
+        id: generateId(),
+        title,
+        description,
+        priority,
+        startDate,
+        endDate,
+        timeConstraint
+      };
+
+      state.goals.push(newGoal);
+      saveState();
+      renderGoalList();
+      clearGoalForm();
+      showNotification('成功', '目标添加成功');
+    }
+
+    function clearGoalForm() {
+      document.getElementById('goal-title').value = '';
+      document.getElementById('goal-desc').value = '';
+      document.getElementById('goal-priority').value = 'medium';
+      document.getElementById('goal-start').value = '';
+      document.getElementById('goal-end').value = '';
+      document.getElementById('goal-hours').value = '1';
+    }
+
+    function deleteGoal(id) {
+      state.goals = state.goals.filter(g => g.id !== id);
+      state.scheduleItems = state.scheduleItems.filter(item => item.goalId !== id);
+      saveState();
+      renderGoalList();
+      renderScheduleList();
+      renderCalendar();
+      showNotification('成功', '目标已删除');
+    }
+
+    function generateSchedule() {
+      if (state.goals.length === 0) {
+        showNotification('提示', '请先添加目标');
+        return;
+      }
+
+      state.scheduleItems = [];
+
+      const sortedGoals = [...state.goals].sort((a, b) => {
+        const priorityOrder = { high: 0, medium: 1, low: 2 };
+        return priorityOrder[a.priority] - priorityOrder[b.priority];
+      });
+
+      sortedGoals.forEach(goal => {
+        const startDate = new Date(goal.startDate);
+        const endDate = new Date(goal.endDate);
+        const current = new Date(startDate);
+
+        while (current <= endDate) {
+          generateDailySchedule(goal, current);
+          current.setDate(current.getDate() + 1);
+        }
+      });
+
+      saveState();
+      renderScheduleList();
+      renderCalendar();
+      showNotification('成功', `已生成 ${state.scheduleItems.length} 个行程`);
+    }
+
+    function generateDailySchedule(goal, date) {
+      const dateStr = date.toISOString().split('T')[0];
+      const dayOfWeek = date.getDay();
+
+      let startHour = dayOfWeek >= 1 && dayOfWeek <= 5 ? 9 : 10;
+      const endHour = dayOfWeek >= 1 && dayOfWeek <= 5 ? 18 : 16;
+
+      let remainingHours = goal.timeConstraint;
+
+      while (remainingHours > 0) {
+        const sessionDuration = Math.min(2, remainingHours);
+        const sessionEndHour = startHour + sessionDuration;
+
+        if (sessionEndHour > endHour) break;
+
+        const scheduleItem = {
+          id: generateId(),
+          title: goal.title,
+          description: goal.description,
+          startTime: `${dateStr}T${String(startHour).padStart(2, '0')}:00:00`,
+          endTime: `${dateStr}T${String(sessionEndHour).padStart(2, '0')}:00:00`,
+          date: dateStr,
+          goalId: goal.id,
+          priority: goal.priority
+        };
+
+        state.scheduleItems.push(scheduleItem);
+        remainingHours -= sessionDuration;
+        startHour = sessionEndHour + 1;
+      }
+    }
+
+    function deleteScheduleItem(id) {
+      state.scheduleItems = state.scheduleItems.filter(item => item.id !== id);
+      saveState();
+      renderScheduleList();
+      renderCalendar();
+      showNotification('成功', '行程已删除');
+    }
+
+    function switchTab(tabName) {
+      state.currentTab = tabName;
+      
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+      
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(tabName).classList.add('active');
+      
+      if (tabName === 'goals') {
+        renderGoalList();
+      } else if (tabName === 'schedule') {
+        renderScheduleList();
+      } else if (tabName === 'calendar') {
+        renderCalendar();
+      }
+    }
+
+    function renderGoalList() {
+      const goalList = document.getElementById('goalList');
+      
+      if (state.goals.length === 0) {
+        goalList.innerHTML = '<div class="empty-state">暂无目标<br>请添加新目标</div>';
+        return;
+      }
+
+      const goalsHtml = state.goals.map(goal => `
+        <div class="goal-item">
+          <div class="goal-header">
+            <div>
+              <div class="goal-title">${goal.title}</div>
+              ${goal.description ? `<div class="goal-desc">${goal.description}</div>` : ''}
+              <div class="goal-meta">
+                <span class="badge badge-${goal.priority}">${getPriorityLabel(goal.priority)}</span>
+                <span class="text-muted">${formatDateShort(goal.startDate)} ~ ${formatDateShort(goal.endDate)}</span>
+                <span class="text-muted">${goal.timeConstraint}h/天</span>
+              </div>
+            </div>
+            <button class="btn-danger" onclick="deleteGoal('${goal.id}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+
+      goalList.innerHTML = goalsHtml;
+    }
+
+    function renderScheduleList() {
+      const scheduleList = document.getElementById('scheduleList');
+      const scheduleHint = document.getElementById('scheduleHint');
+      
+      if (state.scheduleItems.length === 0) {
+        scheduleList.innerHTML = '<div class="empty-state">暂无行程<br>请生成行程</div>';
+        scheduleHint.textContent = '添加目标后点击生成行程';
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const todayItems = state.scheduleItems.filter(item => item.date === today);
+      todayItems.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+
+      if (todayItems.length === 0) {
+        scheduleList.innerHTML = '<div class="empty-state">今天暂无行程</div>';
+        scheduleHint.textContent = '查看其他日期的行程';
+        return;
+      }
+
+      const scheduleHtml = todayItems.map(item => `
+        <div class="schedule-item ${item.priority}">
+          <div class="schedule-title">${item.title}</div>
+          <div class="schedule-time">${formatTime(item.startTime)} - ${formatTime(item.endTime)}</div>
+          ${item.description ? `<div class="schedule-desc">${item.description}</div>` : ''}
+          <button class="btn-danger" onclick="deleteScheduleItem('${item.id}')" style="margin-top: 6px;">删除</button>
+        </div>
+      `).join('');
+
+      scheduleList.innerHTML = scheduleHtml;
+      scheduleHint.textContent = `今天有 ${todayItems.length} 个行程`;
+    }
+
+    function renderCalendar() {
+      const miniCalendar = document.getElementById('miniCalendar');
+      const date = state.currentDate;
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      
+      const monthStart = new Date(year, month, 1);
+      const monthEnd = new Date(year, month + 1, 0);
+      const firstDay = monthStart.getDay();
+      const daysInMonth = monthEnd.getDate();
+      
+      let html = `
+        <div class="calendar-header">
+          <div class="calendar-title">${year}年${month + 1}月</div>
+          <div class="calendar-nav">
+            <button onclick="changeCalendarMonth(-1)">◀</button>
+            <button onclick="changeCalendarMonth(1)">▶</button>
+          </div>
+        </div>
+        <div class="weekdays">
+          ${['日', '一', '二', '三', '四', '五', '六'].map(day => `<div class="weekday">${day}</div>`).join('')}
+        </div>
+        <div class="calendar-grid">
+      `;
+      
+      for (let i = 0; i < (firstDay === 0 ? 6 : firstDay - 1); i++) {
+        const prevMonthDate = new Date(year, month, -((firstDay === 0 ? 6 : firstDay - 1) - i - 1));
+        html += `<div class="calendar-day other-month">${prevMonthDate.getDate()}</div>`;
+      }
+      
+      for (let i = 1; i <= daysInMonth; i++) {
+        const currentDate = new Date(year, month, i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const hasEvents = state.scheduleItems.some(item => item.date === dateStr);
+        const isToday = currentDate.toDateString() === new Date().toDateString();
+        
+        html += `
+          <div class="calendar-day ${isToday ? 'today' : ''} ${hasEvents ? 'has-events' : ''}">
+            ${i}
+          </div>
+        `;
+      }
+      
+      const totalCells = (firstDay === 0 ? 6 : firstDay - 1) + daysInMonth;
+      const remainingCells = 42 - totalCells;
+      for (let i = 1; i <= remainingCells && i <= 7; i++) {
+        html += `<div class="calendar-day other-month">${i}</div>`;
+      }
+      
+      html += `</div>`;
+      miniCalendar.innerHTML = html;
+    }
+
+    function changeCalendarMonth(direction) {
+      const newDate = new Date(state.currentDate);
+      newDate.setMonth(newDate.getMonth() + direction);
+      state.currentDate = newDate;
+      renderCalendar();
+    }
+
+    function formatDateShort(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('zh-CN', {
+        month: 'numeric',
+        day: 'numeric'
+      });
+    }
+
+    function formatTime(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function getPriorityLabel(priority) {
+      const labels = { high: '高', medium: '中', low: '低' };
+      return labels[priority] || '中';
+    }
+
+    function showNotification(title, message) {
+      const toast = document.createElement('div');
+      toast.className = 'notification-toast';
+      toast.innerHTML = `
+        <div class="notification-toast-title">${title}</div>
+        <div class="notification-toast-message">${message}</div>
+        <div class="notification-toast-time">${new Date().toLocaleTimeString('zh-CN')}</div>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideDown 0.3s ease-out reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+
+    function clearAllData() {
+      if (confirm('确定要清空所有数据吗？此操作不可恢复。')) {
+        state.goals = [];
+        state.scheduleItems = [];
+        saveState();
+        renderGoalList();
+        renderScheduleList();
+        renderCalendar();
+        showNotification('成功', '所有数据已清空');
+      }
+    }
+
+    // 窗口控制 - 检测是否在 Electron 环境中
+    const isElectron = typeof window !== 'undefined' && window.process && window.process.type;
+
+    if (isElectron) {
+      const { ipcRenderer } = window.require('electron');
+      
+      document.getElementById('minimizeBtn').addEventListener('click', () => {
+        ipcRenderer.send('minimize-window');
+      });
+
+      document.getElementById('closeBtn').addEventListener('click', () => {
+        ipcRenderer.send('close-window');
+      });
+    } else {
+      // 在浏览器中测试时的占位行为
+      document.getElementById('minimizeBtn').addEventListener('click', () => {
+        showNotification('提示', '最小化功能仅在桌面应用中可用');
+      });
+
+      document.getElementById('closeBtn').addEventListener('click', () => {
+        if (confirm('确定要关闭吗？')) {
+          window.close();
+        }
+      });
+    }
+
+    // 事件监听
+    document.getElementById('addGoalBtn').addEventListener('click', addGoal);
+    document.getElementById('generateScheduleBtn').addEventListener('click', generateSchedule);
+    document.getElementById('todayBtn').addEventListener('click', () => {
+      state.currentDate = new Date();
+      renderCalendar();
+    });
+    document.getElementById('clearBtn').addEventListener('click', clearAllData);
+
+    // 标签切换
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        switchTab(tab.dataset.tab);
+      });
+    });
+
+    function checkNotifications() {
+      const now = new Date();
+
+      state.scheduleItems.forEach(item => {
+        const startTime = new Date(item.startTime);
+        const minutesUntil = Math.floor((startTime - now) / (1000 * 60));
+
+        if (item.priority === 'high' && minutesUntil > 0 && (minutesUntil === 30 || minutesUntil === 15 || minutesUntil === 5)) {
+          showNotification('行程提醒', `${item.title} 将在 ${minutesUntil} 分钟后开始`);
+        }
+      });
+    }
+
+    function init() {
+      renderGoalList();
+      renderScheduleList();
+      renderCalendar();
+      
+      setInterval(checkNotifications, 60000);
+    }
+
+    init();
+  </script>
+</body>
+</html>
